@@ -1,0 +1,23 @@
+port: 8081
+endpoints:
+  - path: /{$}
+    response: file:model/responses/index.html
+    headers:
+      content-type: 
+        - text/html; charset=utf-8
+
+  - path: /test
+    # no method or empty array equals to all methods
+    method: [get, post, put, delete]
+    response: > 
+      {"test": 1}
+    headers:
+      content-type: 
+        - application/json
+
+  - path: /download
+    method: [get]
+    response: file:model/responses/download/file.txt
+    headers:
+      content-type: 
+        - application/octet-stream

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -8,32 +9,47 @@ import (
 )
 
 type Server struct {
-	server *http.ServeMux
+	server *http.Server
 	model  *Model
 }
 
 func (s *Server) Listen() error {
-	address := fmt.Sprintf(":%d", s.model.Port)
-	log.Println("Listening", address)
+	log.Println("Listening", s.server.Addr)
+	return s.server.ListenAndServe()
+}
 
-	return http.ListenAndServe(address, s.server)
+func (s *Server) Shutdown(ctx context.Context) error {
+	log.Println("Shuting down...")
+	return s.server.Shutdown(ctx)
 }
 
 const responseInFilePrefix = "file:"
 
-func createHandler(model *Model, m *Mapping, server *http.ServeMux) {
-	var writer ResponseBodyWriter = nil
+func createWriterFileResponse(cfg *Cfg, m *Endpoint) ResponseBody {
+	log.Println("Creating a file response writer")
+	file := m.Response[len(responseInFilePrefix):]
+
+	if cfg.CachingEnabled && getCacheableState(file, cfg.CacheItemMaxSize) == canBeCached {
+		log.Println(file, "can be cached")
+		return &ResponseBodyFileCachable{
+			headers: m.Headers,
+			file:    file}
+	} else {
+		log.Println(file, "cannot be cached, will read each time")
+		return &ResponseBodyFile{
+			headers: m.Headers,
+			file:    file}
+	}
+}
+
+func createHandler(cfg *Cfg, m *Endpoint, server *http.ServeMux) {
+	var writer ResponseBody = nil
 
 	if strings.HasPrefix(m.Response, responseInFilePrefix) {
-		log.Println("Creating a file response writer")
-		file := m.Response[len(responseInFilePrefix):]
-		writer = &ResponseBodyWriterFile{
-			cacheableStatus: getCacheableState(file, model.Cache.MaxItemSize),
-			headers:         m.Headers,
-			file:            file}
+		writer = createWriterFileResponse(cfg, m)
 	} else {
 		log.Println("Creating a string response writer")
-		writer = &ResponseBodyWriterString{
+		writer = &ResponseBodyString{
 			headers:  m.Headers,
 			response: []byte(m.Response)}
 	}
@@ -44,22 +60,25 @@ func createHandler(model *Model, m *Mapping, server *http.ServeMux) {
 	}
 
 	if m.Method == nil || len(m.Method) == 0 {
-		log.Println("Creating all methods handler for path", m.Path)
+		log.Println("Mapping all methods handler for path", m.Path)
 		server.HandleFunc(m.Path, handler)
 	} else {
-		log.Println("Creating mapping for", m.Method, "methods handler for path", m.Path)
+		log.Println("Mapping ", m.Method, "methods handler for path", m.Path)
 		for _, method := range m.Method {
-			server.HandleFunc(method+" "+m.Path, handler)
+			server.HandleFunc(strings.ToUpper(method)+" "+m.Path, handler)
 		}
 	}
 }
 
-func NewServer(model *Model) *Server {
+func NewServer(model *Model, cfg Cfg) *Server {
 	var srv *http.ServeMux = http.NewServeMux()
 
-	for _, mapping := range model.Mappings {
-		createHandler(model, &mapping, srv)
+	for _, mapping := range model.Endpoints {
+		createHandler(&cfg, &mapping, srv)
 	}
 
-	return &Server{server: srv, model: model}
+	address := fmt.Sprintf(":%d", model.Port)
+
+	s := &http.Server{Addr: address, Handler: srv}
+	return &Server{server: s, model: model}
 }

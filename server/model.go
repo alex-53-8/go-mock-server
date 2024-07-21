@@ -7,26 +7,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Header struct {
-	Key   string `yaml:"key"`
-	Value string `yaml:"value"`
-}
-
-type Mapping struct {
-	Path     string   `yaml:"path"`
-	Method   []string `yaml:"method"`
-	Response string   `yaml:"response"`
-	Headers  []Header `yaml:"headers"`
-}
-
-type Cache struct {
-	MaxItemSize int64 `yaml:"maxItemSize"`
+type Endpoint struct {
+	Path     string              `yaml:"path"`
+	Method   []string            `yaml:"method"`
+	Response string              `yaml:"response"`
+	Headers  map[string][]string `yaml:"headers"`
 }
 
 type Model struct {
-	Port     int       `yaml:"port"`
-	Mappings []Mapping `yaml:"mappings"`
-	Cache    Cache     `yaml:"cache"`
+	Port      int        `yaml:"port"`
+	Endpoints []Endpoint `yaml:"endpoints"`
 }
 
 const CacheMaxItemSizeDefault = int64(1024 * 1024)
@@ -43,10 +33,6 @@ func ReadModel(filename string) (*Model, error) {
 	if err != nil {
 		log.Fatalf("error: %v", err)
 		return nil, err
-	}
-
-	if model.Cache.MaxItemSize == 0 {
-		model.Cache.MaxItemSize = CacheMaxItemSizeDefault
 	}
 
 	return &model, nil

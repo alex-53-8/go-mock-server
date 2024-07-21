@@ -1,0 +1,1 @@
+a file that is downloaded instead of opening in a browser
