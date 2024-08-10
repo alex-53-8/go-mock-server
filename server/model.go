@@ -8,10 +8,11 @@ import (
 )
 
 type Endpoint struct {
-	Path     string              `yaml:"path"`
-	Method   []string            `yaml:"method"`
-	Response string              `yaml:"response"`
-	Headers  map[string][]string `yaml:"headers"`
+	Path         string              `yaml:"path"`
+	Method       []string            `yaml:"method"`
+	ResponseBody string              `yaml:"response-body"`
+	StatusCode   int                 `yaml:"status-code"`
+	Headers      map[string][]string `yaml:"headers"`
 }
 
 type Model struct {

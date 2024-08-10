@@ -25,33 +25,42 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 const responseInFilePrefix = "file:"
 
+func statusCode(code, fallback int) int {
+	if code < 100 {
+		return 200
+	}
+
+	return code
+}
+
 func createWriterFileResponse(cfg *Cfg, m *Endpoint) ResponseBody {
 	log.Println("Creating a file response writer")
-	file := m.Response[len(responseInFilePrefix):]
-
+	file := m.ResponseBody[len(responseInFilePrefix):]
 	if cfg.CachingEnabled && getCacheableState(file, cfg.CacheItemMaxSize) == canBeCached {
 		log.Println(file, "can be cached")
 		return &ResponseBodyFileCachable{
-			headers: m.Headers,
-			file:    file}
+			ResponseBodyFile: ResponseBodyFile{
+				Response: Response{headers: m.Headers, statusCode: statusCode(m.StatusCode, 200)},
+				file:     file,
+			}}
 	} else {
 		log.Println(file, "cannot be cached, will read each time")
 		return &ResponseBodyFile{
-			headers: m.Headers,
-			file:    file}
+			Response: Response{headers: m.Headers, statusCode: statusCode(m.StatusCode, 200)},
+			file:     file}
 	}
 }
 
 func createHandler(cfg *Cfg, m *Endpoint, server *http.ServeMux) {
 	var writer ResponseBody = nil
 
-	if strings.HasPrefix(m.Response, responseInFilePrefix) {
+	if strings.HasPrefix(m.ResponseBody, responseInFilePrefix) {
 		writer = createWriterFileResponse(cfg, m)
 	} else {
 		log.Println("Creating a string response writer")
 		writer = &ResponseBodyString{
-			headers:  m.Headers,
-			response: []byte(m.Response)}
+			Response: Response{headers: m.Headers, statusCode: statusCode(m.StatusCode, 200)},
+			response: []byte(m.ResponseBody)}
 	}
 
 	handler := func(res http.ResponseWriter, req *http.Request) {

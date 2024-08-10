@@ -5,12 +5,13 @@ import (
 )
 
 type ResponseBodyFile struct {
-	file    string
-	headers map[string][]string
+	Response
+	file string
 }
 
 func (w *ResponseBodyFile) WriteTo(res http.ResponseWriter) {
 	responseHeadersWriter.writeHeaders(w.headers, res)
+	res.WriteHeader(w.statusCode)
 
 	fileUtils.read(w.file, func(data *[]byte) {
 		res.Write(*data)
@@ -18,14 +19,14 @@ func (w *ResponseBodyFile) WriteTo(res http.ResponseWriter) {
 }
 
 type ResponseBodyFileCachable struct {
-	file     string
+	ResponseBodyFile
 	cache    []byte
 	isCached bool
-	headers  map[string][]string
 }
 
 func (w *ResponseBodyFileCachable) WriteTo(res http.ResponseWriter) {
 	responseHeadersWriter.writeHeaders(w.headers, res)
+	res.WriteHeader(w.statusCode)
 
 	if w.isCached {
 		res.Write(w.cache)

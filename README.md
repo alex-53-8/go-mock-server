@@ -27,7 +27,8 @@ endpoints:
 - `methods` optional element, if omited or empty then mapped on all method, otherwise specify list of methods to map on
             possible values: get, post, put, delete, patch, options, connect, trace, head
 - `headers` a map of headers to be sent in response, key of a map is a header name and value of a map is a header's value
-- `response` can be just a string a or reference to a file with response
+- `response-body` can be just a string a or reference to a file with response
+- `status-code` a status code to be returned to a callee
 
 ```yaml
 #string

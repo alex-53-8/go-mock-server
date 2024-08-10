@@ -12,6 +12,11 @@ type ResponseHeaders interface {
 	writeHeaders(headers map[string][]string, res http.ResponseWriter)
 }
 
+type Response struct {
+	statusCode int
+	headers    map[string][]string
+}
+
 type ResponseHeadersWriter struct {
 }
 

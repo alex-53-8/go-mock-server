@@ -1,7 +1,7 @@
 port: 8081
 endpoints:
   - path: /{$}
-    response: file:model/responses/index.html
+    response-body: file:model/responses/index.html
     headers:
       content-type: 
         - text/html; charset=utf-8
@@ -9,7 +9,7 @@ endpoints:
   - path: /test
     # no method or empty array equals to all methods
     method: [get, post, put, delete]
-    response: > 
+    response-body: > 
       {"test": 1}
     headers:
       content-type: 
@@ -17,7 +17,14 @@ endpoints:
 
   - path: /download
     method: [get]
-    response: file:model/responses/download/file.txt
+    response-body: file:model/responses/download/file.txt
     headers:
       content-type: 
         - application/octet-stream
+
+  - path: /redirect
+    method: [get]
+    status-code: 301
+    headers:
+      location: 
+        - https://google.com
