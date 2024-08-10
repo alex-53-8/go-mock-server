@@ -27,11 +27,12 @@ func Test_ResponseBodyFile(t *testing.T) {
 	responseWriter := MockResponseWriter{header: http.Header{}}
 
 	headers := map[string][]string{"h1": {"v1", "v2"}}
-	subject := ResponseBodyFile{file: "test-name", headers: headers}
+	subject := ResponseBodyFile{file: "test-name", Response: Response{statusCode: 200, headers: headers}}
 
-	mockHeaders.On("writeHeaders", headers, &responseWriter).Return(true).Once()
-	mockFileUtils.On("read", "test-name", mock.Anything).Return(nil).Once()
-	responseWriter.On("Write", mockFileUtils.data).Return(true).Once()
+	mockHeaders.On("writeHeaders", headers, &responseWriter).Once()
+	mockFileUtils.On("read", "test-name", mock.Anything).Once()
+	responseWriter.On("Write", mockFileUtils.data).Once()
+	responseWriter.On("WriteHeader", 200).Once()
 
 	subject.WriteTo(&responseWriter)
 
@@ -53,11 +54,12 @@ func Test_ResponseBodyFileCachable(t *testing.T) {
 	responseWriter := MockResponseWriter{header: http.Header{}}
 
 	headers := map[string][]string{"h1": {"v1", "v2"}}
-	subject := ResponseBodyFileCachable{file: "test-name", headers: headers}
+	subject := ResponseBodyFileCachable{ResponseBodyFile: ResponseBodyFile{file: "test-name", Response: Response{statusCode: 200, headers: headers}}}
 
-	mockHeaders.On("writeHeaders", headers, &responseWriter).Return(true).Twice()
-	mockFileUtils.On("read", "test-name", mock.Anything).Return(nil).Once()
-	responseWriter.On("Write", fileData).Return(true).Twice()
+	mockHeaders.On("writeHeaders", headers, &responseWriter).Twice()
+	mockFileUtils.On("read", "test-name", mock.Anything).Once()
+	responseWriter.On("Write", fileData).Twice()
+	responseWriter.On("WriteHeader", 200).Twice()
 
 	assert.False(t, subject.isCached)
 	assert.Equal(t, 0, len(subject.cache))

@@ -10,18 +10,20 @@ import (
 	"time"
 )
 
+const itemMaxSizeInCache = 1024 * 1024
+
 func main() {
 	file := flag.String("file", "server.yml", "file with a server model")
-	printModel := flag.Bool("print-model", false, "print model")
-	cachingEnabled := flag.Bool("caching-enabled", true, "enable caching for responses read from a storage")
-	cacheItemMaxSize := flag.Int64("cached-item-max-size", 1024*1024, "max size of one item can be stored in cache")
+	printModel := flag.Bool("print-model", false, "prints a model read from a file system")
+	cachingEnabled := flag.Bool("cache-enabled", true, "enable caching for responses read from a storage")
+	cacheItemMaxSize := flag.Int64("cache-item-max-size", itemMaxSizeInCache, "max size of one item can be stored in cache")
 
 	flag.Parse()
 
 	cfg := server.Cfg{CacheItemMaxSize: *cacheItemMaxSize, CachingEnabled: *cachingEnabled}
 
 	if file == nil {
-		log.Println("filename is nil")
+		log.Println("file name with a server model is missed")
 		return
 	}
 	log.Println("reading a model from a file", *file)

@@ -37,7 +37,7 @@ func (i *MockResponseWriter) Write(data []byte) (int, error) {
 }
 
 func (i *MockResponseWriter) WriteHeader(statusCode int) {
-	i.Called()
+	i.Called(statusCode)
 }
 
 func TestHeaders(t *testing.T) {

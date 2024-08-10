@@ -24,10 +24,11 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 const responseInFilePrefix = "file:"
+const fallbackStatusCode = 200
 
 func statusCode(code, fallback int) int {
 	if code < 100 {
-		return 200
+		return fallback
 	}
 
 	return code
@@ -40,13 +41,13 @@ func createWriterFileResponse(cfg *Cfg, m *Endpoint) ResponseBody {
 		log.Println(file, "can be cached")
 		return &ResponseBodyFileCachable{
 			ResponseBodyFile: ResponseBodyFile{
-				Response: Response{headers: m.Headers, statusCode: statusCode(m.StatusCode, 200)},
+				Response: Response{headers: m.Headers, statusCode: statusCode(m.StatusCode, fallbackStatusCode)},
 				file:     file,
 			}}
 	} else {
 		log.Println(file, "cannot be cached, will read each time")
 		return &ResponseBodyFile{
-			Response: Response{headers: m.Headers, statusCode: statusCode(m.StatusCode, 200)},
+			Response: Response{headers: m.Headers, statusCode: statusCode(m.StatusCode, fallbackStatusCode)},
 			file:     file}
 	}
 }
@@ -59,7 +60,7 @@ func createHandler(cfg *Cfg, m *Endpoint, server *http.ServeMux) {
 	} else {
 		log.Println("Creating a string response writer")
 		writer = &ResponseBodyString{
-			Response: Response{headers: m.Headers, statusCode: statusCode(m.StatusCode, 200)},
+			Response: Response{headers: m.Headers, statusCode: statusCode(m.StatusCode, fallbackStatusCode)},
 			response: []byte(m.ResponseBody)}
 	}
 
